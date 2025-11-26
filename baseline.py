@@ -37,10 +37,9 @@ class FCFSTriageSystem:
     def is_empty(self) -> bool:
         return self._size == 0
 
-    def arrive(self, patient: Patient) -> None:
+    def arrive(self, patient: Patient) -> bool:
         if self.is_full():
-            print("Queue overflow! Cannot enqueue new patient.")
-            return
+            return False
 
         new_node = _Node(patient)
 
@@ -53,10 +52,10 @@ class FCFSTriageSystem:
             self.tail = new_node
 
         self._size += 1
+        return True
 
     def serve_next(self) -> Optional[Patient]:
         if self.head is None:
-            print("Queue underflow! No patients to serve.")
             return None
 
         node = self.head
@@ -108,21 +107,40 @@ class FCFSTriageSystem:
         return self._capacity
 
 
+def clear_screen() -> None:
+    import os
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+
+def print_section(title: str) -> None:
+    print("\n" + "-"*60)
+    print(f"  {title}")
+    print("-"*60)
+
+
+def print_success(msg: str) -> None:
+    print(f"✓ {msg}")
+
+
+def print_error(msg: str) -> None:
+    print(f"✗ {msg}")
+
+
 def read_int(prompt: str, min_val: Optional[int] = None,
              max_val: Optional[int] = None) -> int:
     while True:
-        raw = input(prompt)
+        raw = input(f"  {prompt}")
         try:
             value = int(raw)
         except ValueError:
-            print("Invalid number. Try again.")
+            print_error("Invalid number. Try again.")
             continue
 
         if min_val is not None and value < min_val:
-            print("Out of range. Try again.")
+            print_error(f"Must be at least {min_val}. Try again.")
             continue
         if max_val is not None and value > max_val:
-            print("Out of range. Try again.")
+            print_error(f"Must be at most {max_val}. Try again.")
             continue
 
         return value
@@ -130,38 +148,46 @@ def read_int(prompt: str, min_val: Optional[int] = None,
 
 def read_non_empty(prompt: str) -> str:
     while True:
-        s = input(prompt).strip()
+        s = input(f"  {prompt}").strip()
         if s:
             return s
-        print("Input cannot be empty. Try again.")
+        print_error("Input cannot be empty. Try again.")
 
 
 if __name__ == "__main__":
-    print("=== FCFS Triage System Demo (Baseline) ===\n")
+    clear_screen()
+    print("\n" + "="*60)
+    print("  🏥 FCFS TRIAGE SYSTEM (BASELINE) 🏥")
+    print("="*60 + "\n")
 
     arrival_counter = 0
     option = 0
 
     queue_size = read_int("Enter queue max capacity (e.g. 5 or 10): ", 1)
     system = FCFSTriageSystem(queue_size)
+    print_success(f"System initialized with capacity: {queue_size}\n")
 
-    while option != 8:
-        print("\nMenu:")
-        print(" 1. Enqueue / Add patient")
-        print(" 2. Dequeue / Serve next patient")
-        print(" 3. Show front patient")
-        print(" 4. Show rear patient")
-        print(" 5. Check if queue is full")
-        print(" 6. Check if queue is empty")
-        print(" 7. Display queue (front to rear)")
-        print(" 8. Exit")
-        option = read_int("Enter option: ", 1, 8)
+    while option != 9:
+        print("\n" + "="*60)
+        print("  MENU")
+        print("="*60)
+        print(" 1. ➕ Add patient")
+        print(" 2. 👤 Serve next patient")
+        print(" 3. 🔍 Show front patient")
+        print(" 4. 🔍 Show rear patient")
+        print(" 5. 📊 Check if queue is full")
+        print(" 6. 📊 Check if queue is empty")
+        print(" 7. 📋 Display entire queue")
+        print(" 8. ℹ️  Queue statistics")
+        print(" 9. 🚪 Exit")
+        print("="*60)
+        option = read_int("Enter your choice: ", 1, 9)
 
         if option == 1:
-            print("\n-- Add new patient --")
-            name = read_non_empty("Enter name: ")
-            pid = read_int("Enter ID (integer): ")
-            severity = read_int("Enter severity (1=low, 5=critical): ", 1, 5)
+            print_section("ADD NEW PATIENT")
+            name = read_non_empty("Patient Name: ")
+            pid = read_int("Patient ID: ")
+            severity = read_int("Severity (1=Low → 5=Critical): ", 1, 5)
             arrival_counter += 1
 
             p = Patient(
@@ -170,63 +196,105 @@ if __name__ == "__main__":
                 severity=severity,
                 arrival_time=arrival_counter,
             )
-            system.arrive(p)
+            if system.arrive(p):
+                print_success(f"Patient {name} (ID: {pid}) added to queue!")
+            else:
+                print_error("Failed to add patient - queue is full!")
 
         elif option == 2:
+            print_section("SERVE NEXT PATIENT")
             p = system.serve_next()
             if p is not None:
-                print(
-                    f"\nDequeued / Serving: id={p.id}, "
-                    f"name={p.name}, severity={p.severity}"
-                )
+                print_success(f"Now serving: {p.name}")
+                print(f"  ID: {p.id} | Severity: {p.severity}/5 | Arrival: #{p.arrival_time}")
+            else:
+                print_error("Queue is empty - no patients to serve!")
 
         elif option == 3:
+            print_section("FRONT PATIENT")
             if system.is_empty():
-                print("\nQueue is empty!")
+                print_error("Queue is empty!")
             else:
                 front_patient = system.traverse_forward()[0]
-                print(
-                    f"\nFront patient: id={front_patient.id}, "
-                    f"name={front_patient.name}, severity={front_patient.severity}"
-                )
+                print(f"  Name: {front_patient.name}")
+                print(f"  ID: {front_patient.id}")
+                print(f"  Severity: {front_patient.severity}/5")
+                print(f"  Arrival Order: #{front_patient.arrival_time}")
 
         elif option == 4:
+            print_section("REAR PATIENT")
             if system.is_empty():
-                print("\nQueue is empty!")
+                print_error("Queue is empty!")
             else:
                 rear_patient = system.traverse_backward()[0]
-                print(
-                    f"\nRear patient: id={rear_patient.id}, "
-                    f"name={rear_patient.name}, severity={rear_patient.severity}"
-                )
+                print(f"  Name: {rear_patient.name}")
+                print(f"  ID: {rear_patient.id}")
+                print(f"  Severity: {rear_patient.severity}/5")
+                print(f"  Arrival Order: #{rear_patient.arrival_time}")
 
         elif option == 5:
-            if system.is_full():
-                print("\nQueue is FULL")
-            else:
-                print("\nQueue is NOT FULL")
+            print_section("QUEUE STATUS - CAPACITY")
+            size = system.get_current_size()
             cap = system.get_max_size()
-            cap_str = str(cap) if cap is not None else "No limit"
-            print(
-                f"Current Size: {system.get_current_size()}  "
-                f"Max Capacity: {cap_str}"
-            )
+            cap_str = str(cap) if cap is not None else "Unlimited"
+            usage = (size / cap * 100) if cap is not None else 0
+            
+            if system.is_full():
+                print_error(f"Queue is FULL! {size}/{cap_str}")
+            else:
+                print_success(f"Queue is NOT full.")
+            
+            print(f"  Current Size: {size}")
+            print(f"  Max Capacity: {cap_str}")
+            if cap is not None:
+                print(f"  Usage: {usage:.1f}%")
 
         elif option == 6:
-            if system.is_empty():
-                print("\nQueue is EMPTY")
-            else:
-                print("\nQueue is NOT EMPTY")
+            print_section("QUEUE STATUS - OCCUPANCY")
+            size = system.get_current_size()
             cap = system.get_max_size()
-            cap_str = str(cap) if cap is not None else "No limit"
-            print(
-                f"Current Size: {system.get_current_size()}  "
-                f"Max Capacity: {cap_str}"
-            )
+            cap_str = str(cap) if cap is not None else "Unlimited"
+            
+            if system.is_empty():
+                print_error("Queue is EMPTY!")
+            else:
+                print_success(f"Queue is NOT empty. {size} patient(s) waiting.")
+            
+            print(f"  Current Size: {size}")
+            print(f"  Max Capacity: {cap_str}")
 
         elif option == 7:
-            system.display()
+            print_section("QUEUE DISPLAY (Front → Rear)")
+            if system.is_empty():
+                print_error("Queue is empty!")
+            else:
+                patients = system.traverse_forward()
+                print("  " + "-"*90)
+                print(f"  {'#':<4} | {'Name':<20} | {'ID':<5} | {'Severity':<18} | {'Arrival':<8}")
+                print("  " + "-"*90)
+                for i, p in enumerate(patients, 1):
+                    severity_str = "🔴" * p.severity + "⚪" * (5 - p.severity)
+                    print(f"  {i:<4} | {p.name:<20} | {p.id:<5} | {severity_str:<18} | #{p.arrival_time:<7}")
+                print("  " + "-"*90)
+                print(f"  Total: {len(patients)} patient(s)")
 
         elif option == 8:
-            print("\nExiting FCFS demo.")
+            print_section("QUEUE STATISTICS")
+            size = system.get_current_size()
+            cap = system.get_max_size()
+            cap_str = str(cap) if cap is not None else "Unlimited"
+            patients = system.traverse_forward()
+            
+            print(f"  Total Patients: {size}")
+            print(f"  Max Capacity: {cap_str}")
+            if patients:
+                avg_severity = sum(p.severity for p in patients) / len(patients)
+                print(f"  Average Severity: {avg_severity:.1f}/5")
+                print(f"  Highest Severity: {max(p.severity for p in patients)}/5")
+                print(f"  Lowest Severity: {min(p.severity for p in patients)}/5")
+
+        elif option == 9:
+            print("\n" + "="*60)
+            print("  👋 Thank you for using FCFS Triage System!")
+            print("="*60 + "\n")
             break
