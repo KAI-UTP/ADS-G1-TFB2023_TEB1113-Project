@@ -267,14 +267,16 @@ class PriorityTriageSystem:
 if __name__ == "__main__":
     import os
     os.system('cls' if os.name == 'nt' else 'clear')
-    print("\n" + "="*60)
-    print("  PRIORITY QUEUE TRIAGE SYSTEM (OPTIMIZED)")
-    print("="*60 + "\n")
+    
+    print_section("PRIORITY QUEUE TRIAGE SYSTEM (OPTIMIZED)")
+    print("  Uses: Heap-based priority queue with BST for patient storage")
+    print("  Features: Highest severity patients served first")
+    print()
 
-    num_docs = read_int("Enter number of doctors in rotation: ", 1)
+    num_docs = read_int("Enter number of doctors in rotation > ", 1)
     doctor_names = []
     for i in range(num_docs):
-        name = read_non_empty(f"Doctor {i + 1} name: ")
+        name = read_non_empty(f"Doctor {i + 1} name > ")
         doctor_names.append(name)
 
     doctor_rotation = DoctorRotation(doctor_names)
@@ -284,7 +286,7 @@ if __name__ == "__main__":
         print(doctor_rotation.next_doctor(), end=" ")
     print("\n  (then it repeats in the same order)\n")
 
-    history_size = read_int("Enter max size of service history stack: ", 1)
+    history_size = read_int("Enter max size of service history stack > ", 1)
     history_stack = ServedHistoryStack(history_size)
 
     patient_bst = PatientBST()
@@ -292,29 +294,29 @@ if __name__ == "__main__":
     pq = PriorityTriageSystem()
 
     while True:
-        print("\n" + "="*60)
-        print("  MENU")
-        print("="*60)
-        print(" 1. Add patient")
-        print(" 2. Update patient severity")
-        print(" 3. Serve next patient")
-        print(" 4. Compare Priority Queue vs FCFS")
-        print(" 5. Show service history stack")
-        print(" 6. Pop top history record")
-        print(" 7. Peek top history record")
-        print(" 8. Show BST Inorder traversal")
-        print(" 9. Show BST Preorder traversal")
-        print("10. Show BST Postorder traversal")
-        print("11. Exit")
-        print("="*60)
+        print("\n" + "="*70)
+        print("  MAIN MENU - PRIORITY QUEUE TRIAGE SYSTEM")
+        print("="*70)
+        print("  1. Add patient")
+        print("  2. Update patient severity")
+        print("  3. Serve next patient (highest severity first)")
+        print("  4. Compare Priority Queue vs FCFS")
+        print("  5. Show service history stack")
+        print("  6. Pop top history record")
+        print("  7. Peek top history record")
+        print("  8. Show patients in tree order (inorder)")
+        print("  9. Show patients in tree order (preorder)")
+        print(" 10. Show patients in tree order (postorder)")
+        print(" 11. Exit")
+        print("="*70)
 
         choice = read_int("Enter choice: ", 1, 11)
 
         if choice == 1:
             print_section("ADD NEW PATIENT")
-            name = read_non_empty("Patient name: ")
-            pid = read_int("Patient ID (integer): ")
-            severity = read_int("Severity (1=Low → 5=Critical): ", 1, 5)
+            name = read_non_empty("Patient name > ")
+            pid = read_int("Patient ID (integer) > ")
+            severity = read_int("Severity (1=Low to 5=Critical) > ", 1, 5)
             arrival_counter += 1
 
             p = Patient(
@@ -325,21 +327,23 @@ if __name__ == "__main__":
             )
             pq.arrive(p)
             patient_bst.insert(p)
-            print_success(f"Patient {name} (ID: {pid}) added to priority queue and BST!")
+            print_success(f"Patient {name} (ID: {pid}) added!")
+            print(f"  Severity:    {severity}/5")
+            print(f"  Arrival:     Patient #{arrival_counter}")
 
         elif choice == 2:
             print_section("UPDATE PATIENT SEVERITY")
-            pid = read_int("Patient ID to update: ")
-            new_sev = read_int("New Severity (1=Low → 5=Critical): ", 1, 5)
+            pid = read_int("Patient ID to update > ")
+            new_sev = read_int("New Severity (1=Low to 5=Critical) > ", 1, 5)
             updated_pq = pq.update_severity(pid, new_sev)
             updated_bst = patient_bst.update_severity(pid, new_sev)
             if updated_pq or updated_bst:
                 print_success(f"Patient {pid} severity updated to {new_sev}/5")
             else:
-                print_error("Patient not found!")
+                print_error(f"Patient {pid} not found!")
 
         elif choice == 3:
-            print_section("SERVE NEXT PATIENT")
+            print_section("SERVE NEXT PATIENT (Highest Priority First)")
             patient = pq.serve_next()
             if patient is None:
                 print_error("No patients waiting!")
@@ -350,7 +354,8 @@ if __name__ == "__main__":
                     f"Severity={patient.severity}/5 | Dr. {doctor}"
                 )
                 print_success(f"Now serving: {patient.name}")
-                print(f"  ID: {patient.id} | Severity: {patient.severity}/5")
+                print(f"  Patient ID:     {patient.id}")
+                print(f"  Severity:       {patient.severity}/5")
                 print(f"  Assigned Doctor: Dr. {doctor}")
                 history_stack.push(record)
                 patient_bst.delete_by_id(patient.id)
@@ -367,28 +372,28 @@ if __name__ == "__main__":
             for p in sorted(temp_patients, key=lambda x: x.arrival_time):
                 fcfs.arrive(p)
 
-            print("\n  FCFS Order (First-Come-First-Served):")
-            print("  " + "-"*90)
-            print(f"  {'#':<4} | {'Name':<20} | {'ID':<5} | {'Severity':<18} | {'Arrival':<8}")
-            print("  " + "-"*90)
+            print("\n  FCFS ORDER (First-Come-First-Served):")
+            print("  " + "-"*115)
+            print(f"  {'#':<4} | {'Name':<20} | {'ID':<5} | {'Severity':<10} | {'Arrival':<15}")
+            print("  " + "-"*115)
             for i, p in enumerate(fcfs.traverse_forward(), 1):
-                severity_str = "🔴" * p.severity + "⚪" * (5 - p.severity)
-                print(f"  {i:<4} | {p.name:<20} | {p.id:<5} | {severity_str:<18} | #{p.arrival_time:<7}")
-            print("  " + "-"*90)
+                severity_display = "[" + "*" * p.severity + " " * (5 - p.severity) + "]"
+                print(f"  {i:<4} | {p.name:<20} | {p.id:<5} | {severity_display:<10} | Patient #{p.arrival_time:<11}")
+            print("  " + "-"*115)
 
-            print("\n  Priority Queue Order (High Severity First):")
-            print("  " + "-"*90)
-            print(f"  {'#':<4} | {'Name':<20} | {'ID':<5} | {'Severity':<18} | {'Arrival':<8}")
-            print("  " + "-"*90)
+            print("\n  PRIORITY QUEUE ORDER (Highest Severity First):")
+            print("  " + "-"*115)
+            print(f"  {'#':<4} | {'Name':<20} | {'ID':<5} | {'Severity':<10} | {'Arrival':<15}")
+            print("  " + "-"*115)
             heap_copy = list(pq._heap)
             heapq.heapify(heap_copy)
             idx = 1
             while heap_copy:
                 _, _, p = heapq.heappop(heap_copy)
-                severity_str = "🔴" * p.severity + "⚪" * (5 - p.severity)
-                print(f"  {idx:<4} | {p.name:<20} | {p.id:<5} | {severity_str:<18} | #{p.arrival_time:<7}")
+                severity_display = "[" + "*" * p.severity + " " * (5 - p.severity) + "]"
+                print(f"  {idx:<4} | {p.name:<20} | {p.id:<5} | {severity_display:<10} | Patient #{p.arrival_time:<11}")
                 idx += 1
-            print("  " + "-"*90)
+            print("  " + "-"*115)
 
         elif choice == 5:
             print_section("SERVICE HISTORY STACK")
@@ -406,45 +411,45 @@ if __name__ == "__main__":
         elif choice == 8:
             print_section("BST - INORDER TRAVERSAL (Sorted by Patient ID)")
             if patient_bst.is_empty():
-                print_error("BST is empty!")
+                print_error("BST is empty! No patients to display.")
             else:
-                print("  " + "-"*90)
-                print(f"  {'#':<4} | {'ID':<5} | {'Name':<20} | {'Severity':<18} | {'Arrival':<8}")
-                print("  " + "-"*90)
+                print("  " + "-"*115)
+                print(f"  {'#':<4} | {'ID':<5} | {'Name':<20} | {'Severity':<10} | {'Arrival':<15}")
+                print("  " + "-"*115)
                 for i, p in enumerate(patient_bst.inorder(), 1):
-                    severity_str = "🔴" * p.severity + "⚪" * (5 - p.severity)
-                    print(f"  {i:<4} | {p.id:<5} | {p.name:<20} | {severity_str:<18} | #{p.arrival_time:<7}")
-                print("  " + "-"*90)
+                    severity_display = "[" + "*" * p.severity + " " * (5 - p.severity) + "]"
+                    print(f"  {i:<4} | {p.id:<5} | {p.name:<20} | {severity_display:<10} | Patient #{p.arrival_time:<11}")
+                print("  " + "-"*115)
 
         elif choice == 9:
-            print_section("BST - PREORDER TRAVERSAL")
+            print_section("BST - PREORDER TRAVERSAL (Root-Left-Right)")
             if patient_bst.is_empty():
-                print_error("BST is empty!")
+                print_error("BST is empty! No patients to display.")
             else:
-                print("  " + "-"*90)
-                print(f"  {'#':<4} | {'ID':<5} | {'Name':<20} | {'Severity':<18} | {'Arrival':<8}")
-                print("  " + "-"*90)
+                print("  " + "-"*115)
+                print(f"  {'#':<4} | {'ID':<5} | {'Name':<20} | {'Severity':<10} | {'Arrival':<15}")
+                print("  " + "-"*115)
                 for i, p in enumerate(patient_bst.preorder(), 1):
-                    severity_str = "🔴" * p.severity + "⚪" * (5 - p.severity)
-                    print(f"  {i:<4} | {p.id:<5} | {p.name:<20} | {severity_str:<18} | #{p.arrival_time:<7}")
-                print("  " + "-"*90)
+                    severity_display = "[" + "*" * p.severity + " " * (5 - p.severity) + "]"
+                    print(f"  {i:<4} | {p.id:<5} | {p.name:<20} | {severity_display:<10} | Patient #{p.arrival_time:<11}")
+                print("  " + "-"*115)
 
         elif choice == 10:
-            print_section("BST - POSTORDER TRAVERSAL")
+            print_section("BST - POSTORDER TRAVERSAL (Left-Right-Root)")
             if patient_bst.is_empty():
-                print_error("BST is empty!")
+                print_error("BST is empty! No patients to display.")
             else:
-                print("  " + "-"*90)
-                print(f"  {'#':<4} | {'ID':<5} | {'Name':<20} | {'Severity':<18} | {'Arrival':<8}")
-                print("  " + "-"*90)
+                print("  " + "-"*115)
+                print(f"  {'#':<4} | {'ID':<5} | {'Name':<20} | {'Severity':<10} | {'Arrival':<15}")
+                print("  " + "-"*115)
                 for i, p in enumerate(patient_bst.postorder(), 1):
-                    severity_str = "🔴" * p.severity + "⚪" * (5 - p.severity)
-                    print(f"  {i:<4} | {p.id:<5} | {p.name:<20} | {severity_str:<18} | #{p.arrival_time:<7}")
-                print("  " + "-"*90)
+                    severity_display = "[" + "*" * p.severity + " " * (5 - p.severity) + "]"
+                    print(f"  {i:<4} | {p.id:<5} | {p.name:<20} | {severity_display:<10} | Patient #{p.arrival_time:<11}")
+                print("  " + "-"*115)
 
         elif choice == 11:
-            print("\n" + "="*60)
-            print("  Thank you for using Priority Triage System!")
-            print("="*60 + "\n")
+            print_section("EXITING PRIORITY QUEUE TRIAGE SYSTEM")
+            print("  Thank you for using the system!")
+            print("  Goodbye.")
             break
 
